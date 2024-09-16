@@ -1,52 +1,89 @@
-document.getElementById('imc-form').addEventListener('submit', function(event) {
-    event.preventDefault();
-
-    // Obtener los valores de peso y altura
+function calcular() {
     const peso = parseFloat(document.getElementById('peso').value);
-    const alturaCm = parseFloat(document.getElementById('altura').value);
+    const altura = parseFloat(document.getElementById('altura').value) / 100;
+    const edad = parseInt(document.getElementById('edad').value);
+    const sexo = document.getElementById('sexo').value;
+    const actividad = document.getElementById('actividad').value;
+    const pesoMeta = parseFloat(document.getElementById('peso-meta').value);
 
-    // Convertir la altura de centímetros a metros
-    const alturaM = alturaCm / 100;
+    // Cálculo de IMC
+    const imc = peso / (altura * altura);
+    document.getElementById('imc-resultado').textContent = `Tu IMC es: ${imc.toFixed(2)}`;
 
-    // Calcular el IMC actual
-    const imc = (peso / (alturaM * alturaM)).toFixed(2);
+    // Cálculo de BMR
+    const bmr = calcularBMR(sexo, peso, altura * 100, edad);
+    document.getElementById('bmr-resultado').textContent = `Tu BMR es: ${bmr.toFixed(2)} calorías diarias`;
 
-    // Mostrar el resultado del IMC
-    const resultadoDiv = document.getElementById('resultado');
-    resultadoDiv.textContent = `Tu IMC es ${imc}`;
+    // Recomendación calórica según nivel de actividad
+    const caloriasRecomendadas = calcularCaloriasDiarias(bmr, actividad);
+    document.getElementById('calorias-recomendadas').textContent = `Debes consumir aproximadamente: ${caloriasRecomendadas.toFixed(2)} calorías diarias`;
 
-    // Determinar la categoría del IMC
-    let categoria = '';
-    if (imc < 18.5) {
-        categoria = 'Bajo peso';
-    } else if (imc >= 18.5 && imc <= 24.9) {
-        categoria = 'Peso normal';
-    } else if (imc >= 25 && imc <= 29.9) {
-        categoria = 'Sobrepeso';
+    // Tiempo para alcanzar el peso objetivo
+    const tiempoMeta = calcularTiempoParaMeta(peso, pesoMeta, caloriasRecomendadas);
+    document.getElementById('tiempo-meta').textContent = `Podrías alcanzar tu peso objetivo en aproximadamente: ${tiempoMeta} semanas`;
+
+    // Mostrar gráfico de progreso
+    mostrarProgreso([peso, pesoMeta]);
+}
+
+function calcularBMR(sexo, peso, altura, edad) {
+    if (sexo === 'masculino') {
+        return 88.36 + (13.4 * peso) + (4.8 * altura) - (5.7 * edad);
     } else {
-        categoria = 'Obesidad';
+        return 447.6 + (9.2 * peso) + (3.1 * altura) - (4.3 * edad);
     }
+}
 
-    resultadoDiv.textContent += ` (${categoria})`;
-
-    // Calcular el peso ideal para un IMC normal (entre 18.5 y 24.9)
-    const pesoMinIdeal = (18.5 * alturaM * alturaM).toFixed(2);
-    const pesoMaxIdeal = (24.9 * alturaM * alturaM).toFixed(2);
-
-    // Mostrar el rango de peso ideal
-    resultadoDiv.textContent += `\nEl rango de peso ideal para tu altura es entre ${pesoMinIdeal} kg y ${pesoMaxIdeal} kg.`;
-
-    // Calcular cuánto peso debe ganar o perder la persona
-    let diferencia = 0;
-    if (imc < 18.5) {
-        // Debe ganar peso
-        diferencia = (pesoMinIdeal - peso).toFixed(2);
-        resultadoDiv.textContent += `\nDeberías aumentar aproximadamente ${diferencia} kg para alcanzar un IMC normal.`;
-    } else if (imc > 24.9) {
-        // Debe perder peso
-        diferencia = (peso - pesoMaxIdeal).toFixed(2);
-        resultadoDiv.textContent += `\nDeberías perder aproximadamente ${diferencia} kg para alcanzar un IMC normal.`;
-    } else {
-        resultadoDiv.textContent += `\nTu peso está dentro del rango saludable.`;
+function calcularCaloriasDiarias(bmr, actividad) {
+    let factorActividad;
+    switch (actividad) {
+        case 'sedentario':
+            factorActividad = 1.2;
+            break;
+        case 'ligero':
+            factorActividad = 1.375;
+            break;
+        case 'moderado':
+            factorActividad = 1.55;
+            break;
+        case 'intenso':
+            factorActividad = 1.725;
+            break;
+        default:
+            factorActividad = 1.2;
     }
-});
+    return bmr * factorActividad;
+}
+
+function calcularTiempoParaMeta(pesoActual, pesoMeta, caloriasRecomendadas) {
+    const deficitCaloricoDiario = 500;  // Se considera un déficit de 500 calorías por día
+    const deficitPorSemana = deficitCaloricoDiario * 7;
+    const kilosAPerder = pesoActual - pesoMeta;
+    const semanas = (kilosAPerder * 7700) / deficitPorSemana;
+    return semanas.toFixed(1);
+}
+
+function mostrarProgreso(pesos) {
+    const ctx = document.getElementById('graficaProgreso').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['Peso actual', 'Peso objetivo'],
+            datasets: [{
+                label: 'Progreso de peso (kg)',
+                data: pesos,
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 2,
+                fill: false
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
