@@ -10,6 +10,19 @@ function calcular() {
     const imc = peso / (altura * altura);
     document.getElementById('imc-resultado').textContent = `Tu IMC es: ${imc.toFixed(2)}`;
 
+    // Determinar estado según IMC
+    let estadoIMC = '';
+    if (imc < 18.5) {
+        estadoIMC = 'Bajo peso';
+    } else if (imc >= 18.5 && imc <= 24.9) {
+        estadoIMC = 'Peso normal';
+    } else if (imc >= 25 && imc <= 29.9) {
+        estadoIMC = 'Sobrepeso';
+    } else {
+        estadoIMC = 'Obesidad';
+    }
+    document.getElementById('estado-imc').textContent = `Estado: ${estadoIMC}`;
+
     // Cálculo de BMR
     const bmr = calcularBMR(sexo, peso, altura * 100, edad);
     document.getElementById('bmr-resultado').textContent = `Tu BMR es: ${bmr.toFixed(2)} calorías diarias`;
@@ -21,6 +34,10 @@ function calcular() {
     // Tiempo para alcanzar el peso objetivo
     const tiempoMeta = calcularTiempoParaMeta(peso, pesoMeta, caloriasRecomendadas);
     document.getElementById('tiempo-meta').textContent = `Podrías alcanzar tu peso objetivo en aproximadamente: ${tiempoMeta} semanas`;
+
+    // Dieta recomendada
+    const dieta = generarDieta(caloriasRecomendadas);
+    document.getElementById('dieta-recomendada').innerHTML = dieta;
 
     // Mostrar gráfico de progreso
     mostrarProgreso([peso, pesoMeta]);
@@ -63,14 +80,31 @@ function calcularTiempoParaMeta(pesoActual, pesoMeta, caloriasRecomendadas) {
     return semanas.toFixed(1);
 }
 
+function generarDieta(caloriasRecomendadas) {
+    const desayuno = (caloriasRecomendadas * 0.25).toFixed(2);
+    const almuerzo = (caloriasRecomendadas * 0.35).toFixed(2);
+    const cena = (caloriasRecomendadas * 0.25).toFixed(2);
+    const snacks = (caloriasRecomendadas * 0.15).toFixed(2);
+
+    return `
+        <h3>Dieta Recomendada:</h3>
+        <ul>
+            <li><strong>Desayuno:</strong> ${desayuno} calorías (Ej: Avena con leche, frutas, nueces)</li>
+            <li><strong>Almuerzo:</strong> ${almuerzo} calorías (Ej: Pechuga de pollo, arroz integral, ensalada)</li>
+            <li><strong>Cena:</strong> ${cena} calorías (Ej: Pescado al horno, quinoa, verduras)</li>
+            <li><strong>Snacks:</strong> ${snacks} calorías (Ej: Yogur, frutas, frutos secos)</li>
+        </ul>
+    `;
+}
+
 function mostrarProgreso(pesos) {
     const ctx = document.getElementById('graficaProgreso').getContext('2d');
     new Chart(ctx, {
         type: 'line',
         data: {
-            labels: ['Peso actual', 'Peso objetivo'],
+            labels: ['Peso actual', 'Peso meta'],
             datasets: [{
-                label: 'Progreso de peso (kg)',
+                label: 'Progreso de Peso',
                 data: pesos,
                 borderColor: 'rgba(75, 192, 192, 1)',
                 borderWidth: 2,
@@ -78,10 +112,9 @@ function mostrarProgreso(pesos) {
             }]
         },
         options: {
-            responsive: true,
             scales: {
                 y: {
-                    beginAtZero: true
+                    beginAtZero: false
                 }
             }
         }
