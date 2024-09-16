@@ -10,16 +10,30 @@ function calcular() {
     const imc = peso / (altura * altura);
     document.getElementById('imc-resultado').textContent = `Tu IMC es: ${imc.toFixed(2)}`;
 
-    // Determinar estado según IMC
+    // Determinar estado según IMC actualizado
     let estadoIMC = '';
-    if (imc < 18.5) {
-        estadoIMC = 'Bajo peso';
-    } else if (imc >= 18.5 && imc <= 24.9) {
-        estadoIMC = 'Peso normal';
-    } else if (imc >= 25 && imc <= 29.9) {
-        estadoIMC = 'Sobrepeso';
-    } else {
-        estadoIMC = 'Obesidad';
+    if (imc < 16) {
+        estadoIMC = 'Desnutrición grave';
+    } else if (imc >= 16 && imc <= 16.9) {
+        estadoIMC = 'Desnutrición moderada';
+    } else if (imc >= 17 && imc <= 18.4) {
+        estadoIMC = 'Desnutrición leve';
+    } else if (imc >= 18.5 && imc <= 21.9) {
+        estadoIMC = 'Peso insuficiente';
+    } else if (imc >= 22 && imc <= 24.9) {
+        estadoIMC = 'Normopeso';
+    } else if (imc >= 25 && imc <= 26.9) {
+        estadoIMC = 'Riesgo de sobrepeso';
+    } else if (imc >= 27 && imc <= 29.9) {
+        estadoIMC = 'Sobrepeso grado II (preobesidad)';
+    } else if (imc >= 30 && imc <= 34.9) {
+        estadoIMC = 'Obesidad grado I';
+    } else if (imc >= 35 && imc <= 39.9) {
+        estadoIMC = 'Obesidad grado II';
+    } else if (imc >= 40 && imc <= 49.9) {
+        estadoIMC = 'Obesidad grado III';
+    } else if (imc >= 50) {
+        estadoIMC = 'Obesidad grado IV';
     }
     document.getElementById('estado-imc').textContent = `Estado: ${estadoIMC}`;
 
