@@ -1,4 +1,6 @@
 function calcular() {
+    const nombre = document.getElementById('nombre').value;
+    const apellidos = document.getElementById('apellidos').value;
     const peso = parseFloat(document.getElementById('peso').value);
     const altura = parseFloat(document.getElementById('altura').value) / 100;
     const edad = parseInt(document.getElementById('edad').value);
@@ -6,11 +8,26 @@ function calcular() {
     const actividad = document.getElementById('actividad').value;
     const pesoMeta = parseFloat(document.getElementById('peso-meta').value);
 
-    // Cálculo de IMC
     const imc = peso / (altura * altura);
-    document.getElementById('imc-resultado').textContent = `Tu IMC es: ${imc.toFixed(2)}`;
+    const bmr = calcularBMR(sexo, peso, altura * 100, edad);
+    const caloriasRecomendadas = calcularCaloriasDiarias(bmr, actividad);
+    const tiempoMeta = calcularTiempoParaMeta(peso, pesoMeta, caloriasRecomendadas);
+    const dieta = generarDieta(caloriasRecomendadas);
 
-    // Determinar estado según IMC actualizado
+    let estadoIMC = determinarEstadoIMC(imc);
+
+    // Mostrar resultados en la página
+    document.getElementById('imc-resultado').textContent = `Tu IMC es: ${imc.toFixed(2)}`;
+    document.getElementById('estado-imc').textContent = `Estado: ${estadoIMC}`;
+    document.getElementById('bmr-resultado').textContent = `Tu BMR es: ${bmr.toFixed(2)} calorías diarias`;
+    document.getElementById('calorias-recomendadas').textContent = `Debes consumir aproximadamente: ${caloriasRecomendadas.toFixed(2)} calorías diarias`;
+    document.getElementById('tiempo-meta').textContent = `Podrías alcanzar tu peso objetivo en aproximadamente: ${tiempoMeta} semanas`;
+    document.getElementById('dieta-recomendada').innerHTML = dieta;
+
+    mostrarProgreso([peso, pesoMeta]);
+}
+
+function determinarEstadoIMC(imc) {
     let estadoIMC = '';
     if (imc < 16) {
         estadoIMC = 'Desnutrición grave';
@@ -35,26 +52,38 @@ function calcular() {
     } else if (imc >= 50) {
         estadoIMC = 'Obesidad grado IV';
     }
-    document.getElementById('estado-imc').textContent = `Estado: ${estadoIMC}`;
+    return estadoIMC;
+}
 
-    // Cálculo de BMR
-    const bmr = calcularBMR(sexo, peso, altura * 100, edad);
-    document.getElementById('bmr-resultado').textContent = `Tu BMR es: ${bmr.toFixed(2)} calorías diarias`;
+function descargarInforme() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
 
-    // Recomendación calórica según nivel de actividad
-    const caloriasRecomendadas = calcularCaloriasDiarias(bmr, actividad);
-    document.getElementById('calorias-recomendadas').textContent = `Debes consumir aproximadamente: ${caloriasRecomendadas.toFixed(2)} calorías diarias`;
+    const nombre = document.getElementById('nombre').value;
+    const apellidos = document.getElementById('apellidos').value;
+    const edad = parseInt(document.getElementById('edad').value);
+    const altura = parseFloat(document.getElementById('altura').value) / 100;
+    const imc = document.getElementById('imc-resultado').textContent;
+    const estadoIMC = document.getElementById('estado-imc').textContent;
+    const bmr = document.getElementById('bmr-resultado').textContent;
+    const caloriasRecomendadas = document.getElementById('calorias-recomendadas').textContent;
+    const tiempoMeta = document.getElementById('tiempo-meta').textContent;
+    const dieta = document.getElementById('dieta-recomendada').innerText;
 
-    // Tiempo para alcanzar el peso objetivo
-    const tiempoMeta = calcularTiempoParaMeta(peso, pesoMeta, caloriasRecomendadas);
-    document.getElementById('tiempo-meta').textContent = `Podrías alcanzar tu peso objetivo en aproximadamente: ${tiempoMeta} semanas`;
+    // Generar el informe en PDF
+    doc.text(`Informe de Evaluación de IMC`, 10, 10);
+    doc.text(`Nombre: ${nombre} ${apellidos}`, 10, 20);
+    doc.text(imc, 10, 30);
+    doc.text(estadoIMC, 10, 40);
+    doc.text(bmr, 10, 50);
+    doc.text(caloriasRecomendadas, 10, 60);
+    doc.text(tiempoMeta, 10, 70);
+    doc.text("Dieta Recomendada:", 10, 80);
+    const lines = doc.splitTextToSize(dieta, 180); // Ajustar el tamaño del texto
+    doc.text(lines, 10, 90);
 
-    // Dieta recomendada
-    const dieta = generarDieta(caloriasRecomendadas);
-    document.getElementById('dieta-recomendada').innerHTML = dieta;
-
-    // Mostrar gráfico de progreso
-    mostrarProgreso([peso, pesoMeta]);
+    // Descargar el PDF
+    doc.save("Informe_IMC.pdf");
 }
 
 function calcularBMR(sexo, peso, altura, edad) {
@@ -87,28 +116,16 @@ function calcularCaloriasDiarias(bmr, actividad) {
 }
 
 function calcularTiempoParaMeta(pesoActual, pesoMeta, caloriasRecomendadas) {
-    const deficitCaloricoDiario = 500;  // Se considera un déficit de 500 calorías por día
-    const deficitPorSemana = deficitCaloricoDiario * 7;
-    const kilosAPerder = pesoActual - pesoMeta;
-    const semanas = (kilosAPerder * 7700) / deficitPorSemana;
-    return semanas.toFixed(1);
+    // Aquí puedes implementar una fórmula para calcular el tiempo estimado
+    const deficitDiario = 500; // Ejemplo de déficit calórico diario
+    const caloriasParaPerderKg = 7700; // Aproximadamente 7700 calorías para perder 1 kg de grasa
+    const deficitTotal = (pesoActual - pesoMeta) * caloriasParaPerderKg;
+    return (deficitTotal / deficitDiario).toFixed(1); // Tiempo en semanas
 }
 
 function generarDieta(caloriasRecomendadas) {
-    const desayuno = (caloriasRecomendadas * 0.25).toFixed(2);
-    const almuerzo = (caloriasRecomendadas * 0.35).toFixed(2);
-    const cena = (caloriasRecomendadas * 0.25).toFixed(2);
-    const snacks = (caloriasRecomendadas * 0.15).toFixed(2);
-
-    return `
-        <h3>Dieta Recomendada:</h3>
-        <ul>
-            <li><strong>Desayuno:</strong> ${desayuno} calorías (Ej: Avena con leche, frutas, nueces)</li>
-            <li><strong>Almuerzo:</strong> ${almuerzo} calorías (Ej: Pechuga de pollo, arroz integral, ensalada)</li>
-            <li><strong>Cena:</strong> ${cena} calorías (Ej: Pescado al horno, quinoa, verduras)</li>
-            <li><strong>Snacks:</strong> ${snacks} calorías (Ej: Yogur, frutas, frutos secos)</li>
-        </ul>
-    `;
+    // Puedes crear una dieta de ejemplo o recomendaciones personalizadas
+    return `Para mantener tu peso, debes consumir aproximadamente ${caloriasRecomendadas.toFixed(2)} calorías diarias.`;
 }
 
 function mostrarProgreso(pesos) {
@@ -116,19 +133,28 @@ function mostrarProgreso(pesos) {
     new Chart(ctx, {
         type: 'line',
         data: {
-            labels: ['Peso actual', 'Peso meta'],
+            labels: ['Inicio', 'Meta'],
             datasets: [{
-                label: 'Progreso de Peso',
+                label: 'Peso',
                 data: pesos,
-                borderColor: 'rgba(75, 192, 192, 1)',
-                borderWidth: 2,
-                fill: false
+                borderColor: 'rgb(75, 192, 192)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
             }]
         },
         options: {
+            responsive: true,
             scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Etapas'
+                    }
+                },
                 y: {
-                    beginAtZero: false
+                    title: {
+                        display: true,
+                        text: 'Peso (kg)'
+                    }
                 }
             }
         }
